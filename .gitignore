@@ -22,7 +22,7 @@ eclipse
 run
 
 # Files from Forge MDK
-changelog.txt
-README.txt
-CREDITS.txt
-LICENSE.txt
+/changelog.txt
+/README.txt
+/CREDITS.txt
+/LICENSE.txt
