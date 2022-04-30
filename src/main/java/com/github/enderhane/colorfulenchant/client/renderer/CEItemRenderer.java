@@ -107,11 +107,11 @@ public class CEItemRenderer extends ItemRenderer {
                 }
                 else {
                     RenderType renderType = RenderTypeLookup.getRenderType(itemStack, flag1);
-                    IVertexBuilder itemBuilder = renderTypeBuffer.getBuffer(renderType);
+                    IVertexBuilder itemBuilder = appointedBuffer.getBuffer(renderType);
                             //getColoredFoilBufferDirect(renderTypeBuffer, renderType, true, itemStack.hasFoil());
                     renderModelLists(bakedModel, itemStack, lightmapCoord, overlayCoord, matrixStack, itemBuilder);
                     if (itemStack.hasFoil()){
-                        renderFoil(bakedModel, itemStack, matrixStack, transformType, renderTypeBuffer, lightmapCoord, overlayCoord, renderType);
+                        renderFoil(bakedModel, itemStack, matrixStack, transformType, appointedBuffer, lightmapCoord, overlayCoord, renderType);
                     }
                 }
             } else {
@@ -119,7 +119,7 @@ public class CEItemRenderer extends ItemRenderer {
             }
             matrixStack.popPose();
         }
-        ((IRenderTypeBuffer.Impl) renderTypeBuffer).endBatch();
+        appointedBuffer.endBatchAfterAll();
     }
 
     private void renderFoil(
