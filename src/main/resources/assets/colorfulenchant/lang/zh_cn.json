@@ -1,0 +1,6 @@
+{
+  "cmd.colorfulenchant.debug.IsHandingItemEnchanted" : "手持物品已附魔",
+  "cmd.colorfulenchant.debug.IsNotHandingItemEnchanted" : "手持物品没有附魔",
+  "cmd.colorfulenchant.debug.IsHandingItemFoiled" : "手持物品有覆层",
+  "cmd.colorfulenchant.debug.IsNotHandingItemFoiled" : "手持物品没有覆层"
+}
