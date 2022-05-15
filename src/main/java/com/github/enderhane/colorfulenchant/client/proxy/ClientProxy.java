@@ -2,11 +2,17 @@ package com.github.enderhane.colorfulenchant.client.proxy;
 
 import com.github.enderhane.colorfulenchant.client.renderer.CEItemRenderer;
 import com.github.enderhane.colorfulenchant.client.renderer.CERenderType;
+import com.github.enderhane.colorfulenchant.client.renderer.entity.layers.CEBipedArmorLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.renderer.FirstPersonRenderer;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.client.renderer.color.ItemColors;
+import net.minecraft.client.renderer.entity.LivingRenderer;
+import net.minecraft.client.renderer.entity.PlayerRenderer;
+import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
+import net.minecraft.client.renderer.entity.layers.LayerRenderer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.client.renderer.model.ModelManager;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.IReloadableResourceManager;
@@ -15,6 +21,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import java.lang.reflect.Field;
+import java.util.List;
+import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
 public class ClientProxy{
@@ -54,6 +62,22 @@ public class ClientProxy{
             return false;
         }
         ((IReloadableResourceManager)(minecraft.getResourceManager())).registerReloadListener(modItemRenderer);
+        final Field layers_LivingRenderer = ObfuscationReflectionHelper.findField(LivingRenderer.class, "field_177097_h");
+        try {
+            layers_LivingRenderer.setAccessible(true);
+            for (Map.Entry<String, PlayerRenderer> entry : minecraft.getEntityRenderDispatcher().playerRenderers.entrySet()) {
+                PlayerRenderer playerRenderer = entry.getValue();
+                List layerList = (List) layers_LivingRenderer.get(playerRenderer);
+                layerList.replaceAll(e ->
+                    e instanceof BipedArmorLayer ?
+                    new CEBipedArmorLayer<>(playerRenderer, new BipedModel(0.5f), new BipedModel(1.0f)) :
+                    e
+                    );
+            }
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            e.printStackTrace();
+            return false;
+        }
         //CERenderType.registerAll();
         return true;
     }

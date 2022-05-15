@@ -33,14 +33,14 @@ public class CEBufferSource {
             put(map, destroyType);
         });
     });
-    private final CERenderTypeBuffer itemBufferSource = new CERenderTypeBuffer(new BufferBuilder(256), fixedBuffers);
+    private final CERenderTypeBuffer bufferSource = new CERenderTypeBuffer(new BufferBuilder(256), fixedBuffers);
 
     private static void put(Object2ObjectLinkedOpenHashMap<RenderType, BufferBuilder> p_228486_0_, RenderType p_228486_1_) {
         p_228486_0_.put(p_228486_1_, new BufferBuilder(p_228486_1_.bufferSize()));
     }
 
-    public CERenderTypeBuffer itemBufferSource() {
-        return itemBufferSource;
+    public CERenderTypeBuffer bufferSource() {
+        return bufferSource;
     }
 
 }

@@ -1,0 +1,93 @@
+package com.github.enderhane.colorfulenchant.client.renderer.entity.layers;
+
+import com.github.enderhane.colorfulenchant.client.renderer.CERenderType;
+import com.github.enderhane.colorfulenchant.client.renderer.CERenderUtil;
+import com.google.common.collect.Maps;
+import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.IEntityRenderer;
+import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
+import net.minecraft.client.renderer.entity.model.BipedModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.item.ArmorItem;
+import net.minecraft.item.IDyeableArmorItem;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+
+import javax.annotation.Nullable;
+import java.util.Map;
+
+public class CEBipedArmorLayer<T extends LivingEntity, M extends BipedModel<T>, A extends BipedModel<T>> extends BipedArmorLayer<T, M, A> {
+
+    private static final Map<String, ResourceLocation> ARMOR_LOCATION_CACHE = Maps.newHashMap();
+    private final A innerModel;
+    private final A outerModel;
+
+
+    public CEBipedArmorLayer(IEntityRenderer<T,M> entityRenderer, A inner, A outer) {
+        super(entityRenderer, inner, outer);
+        this.innerModel = inner;
+        this.outerModel = outer;
+    }
+
+
+    public void render(MatrixStack matrixStack, IRenderTypeBuffer bufferSource, int uv2, T entity, float p_225628_5_, float p_225628_6_, float p_225628_7_, float p_225628_8_, float p_225628_9_, float p_225628_10_) {
+        renderArmorPiece(matrixStack, bufferSource, entity, EquipmentSlotType.CHEST, uv2, this.getArmorModel(EquipmentSlotType.CHEST));
+        renderArmorPiece(matrixStack, bufferSource, entity, EquipmentSlotType.LEGS, uv2, this.getArmorModel(EquipmentSlotType.LEGS));
+        renderArmorPiece(matrixStack, bufferSource, entity, EquipmentSlotType.FEET, uv2, this.getArmorModel(EquipmentSlotType.FEET));
+        renderArmorPiece(matrixStack, bufferSource, entity, EquipmentSlotType.HEAD, uv2, this.getArmorModel(EquipmentSlotType.HEAD));
+    }
+
+    private void renderArmorPiece(MatrixStack matrixStack, IRenderTypeBuffer bufferSource, T entity, EquipmentSlotType slot, int uv2, A model) {
+        ItemStack itemStack = entity.getItemBySlot(slot);
+        if (itemStack.getItem() instanceof ArmorItem) {
+            ArmorItem item = (ArmorItem)itemStack.getItem();
+            if (item.getSlot() == slot) {
+                model = getArmorModelHook(entity, itemStack, slot, model);
+                getParentModel().copyPropertiesTo(model);
+                setPartVisibility(model, slot);
+                boolean isInner = usesInnerModel(slot);
+                boolean hasFoil = itemStack.hasFoil();
+                if (item instanceof net.minecraft.item.IDyeableArmorItem) {
+                    int i = ((IDyeableArmorItem)item).getColor(itemStack);
+                    float red = (float)(i >> 16 & 255) / 255.0F;
+                    float green = (float)(i >> 8 & 255) / 255.0F;
+                    float blue = (float)(i & 255) / 255.0F;
+                    renderModel(matrixStack, bufferSource, uv2, hasFoil, model, red, green, blue, this.getArmorResource(entity, itemStack, slot, null));
+                    renderModel(matrixStack, bufferSource, uv2, hasFoil, model, 1.0F, 1.0F, 1.0F, getArmorResource(entity, itemStack, slot, "overlay"));
+                } else {
+                    renderModel(matrixStack, bufferSource, uv2, hasFoil, model, 1.0F, 1.0F, 1.0F, getArmorResource(entity, itemStack, slot, null));
+                }
+
+            }
+        }
+    }
+
+    private void renderModel(MatrixStack matrixStack, IRenderTypeBuffer bufferSource, int uv2, boolean hasFoil, A model, float red, float green, float blue, ResourceLocation armorResource) {
+        bufferSource = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
+        IVertexBuilder armorBuilder = bufferSource.getBuffer(RenderType.armorCutoutNoCull(armorResource));
+        model.renderToBuffer(matrixStack, armorBuilder, uv2, OverlayTexture.NO_OVERLAY, red, green, blue, 1.0F);
+        if (hasFoil) {
+            IVertexBuilder foilBuilder = bufferSource.getBuffer(CERenderType.coloredArmorEntityGlint());
+            model.renderToBuffer(matrixStack, foilBuilder, uv2, OverlayTexture.NO_OVERLAY, 1.0f, 0.6f, 0.6f, 1.0f);
+        }
+    }
+
+    private A getArmorModel(EquipmentSlotType p_241736_1_) {
+        return usesInnerModel(p_241736_1_) ? innerModel : outerModel;
+    }
+
+    private boolean usesInnerModel(EquipmentSlotType slot) {
+        return slot == EquipmentSlotType.LEGS;
+    }
+
+    private ResourceLocation getArmorLocation(ArmorItem item, boolean isInner, @Nullable String suffix) {
+        String s = "textures/models/armor/" + item.getMaterial().getName() + "_layer_" + (isInner ? 2 : 1) + (suffix == null ? "" : "_" + suffix) + ".png";
+        return ARMOR_LOCATION_CACHE.computeIfAbsent(s, ResourceLocation::new);
+    }
+
+}

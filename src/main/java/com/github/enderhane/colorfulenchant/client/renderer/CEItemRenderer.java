@@ -83,7 +83,7 @@ public class CEItemRenderer extends ItemRenderer {
         int overlayCoord,
         IBakedModel bakedModel) {
 
-        CERenderTypeBuffer appointedBuffer = CERenderUtil.ITEM_RENDER_BUFFER.itemBufferSource();
+        CERenderTypeBuffer appointedBuffer = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
         if (!itemStack.isEmpty()) {
             matrixStack.pushPose();
             boolean flag = transformType == ItemCameraTransforms.TransformType.GUI ||
