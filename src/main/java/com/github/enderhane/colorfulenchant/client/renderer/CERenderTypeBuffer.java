@@ -10,8 +10,50 @@ import java.util.*;
 
 public class CERenderTypeBuffer extends IRenderTypeBuffer.Impl {
 
+    protected final BufferBuilder defaultBuilder;
+    protected final SortedMap<RenderType, BufferBuilder> fixedBuffers;
+    protected Optional<RenderType> lastState = Optional.empty();
+    protected final Set<BufferBuilder> startedBuffers = Sets.newHashSet();
+
     public CERenderTypeBuffer(BufferBuilder builder, SortedMap<RenderType, BufferBuilder> map){
         super(builder, map);
+        defaultBuilder = builder;
+        fixedBuffers = map;
+    }
+
+    @Override
+    public IVertexBuilder getBuffer(RenderType renderType) {
+        Optional<RenderType> stateIn = renderType.asOptional();
+        BufferBuilder builder = getBuilderRaw(renderType);
+        if (!Objects.equals(lastState, stateIn)) {
+            if (lastState.isPresent()) {
+                RenderType lastType = lastState.get();
+                if (!fixedBuffers.containsKey(lastType)) {
+                    endBatch(lastType);
+                }
+            }
+            if (startedBuffers.add(builder)) {
+                builder.begin(renderType.mode(), renderType.format());
+            }
+            lastState = stateIn;
+        }
+        return builder;
+    }
+
+    private BufferBuilder getBuilderRaw(RenderType renderType) {
+        return fixedBuffers.getOrDefault(renderType, defaultBuilder);
+    }
+
+    @Override
+    public void endBatch() {
+        lastState.ifPresent((lastType) -> {
+            if (fixedBuffers.containsKey(lastType)) {
+                endBatch(lastType);
+            }
+        });
+        for(RenderType rendertype : fixedBuffers.keySet()) {
+            endBatch(rendertype);
+        }
     }
 
     /**
@@ -54,6 +96,21 @@ public class CERenderTypeBuffer extends IRenderTypeBuffer.Impl {
         } else {
             for(RenderType rendertype : fixedBuffers.keySet()) {
                 endBatch(rendertype);
+            }
+        }
+    }
+
+    @Override
+    public void endBatch(RenderType renderType) {
+        BufferBuilder builder = getBuilderRaw(renderType);
+        boolean flag = Objects.equals(lastState, renderType.asOptional());
+        if (flag || builder != defaultBuilder) {
+            if (startedBuffers.remove(builder)) {
+                renderType.end(builder, 0, 0, 0);
+                if (flag) {
+                    lastState = Optional.empty();
+                }
+
             }
         }
     }

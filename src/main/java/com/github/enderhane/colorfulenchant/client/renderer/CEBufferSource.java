@@ -29,9 +29,7 @@ public class CEBufferSource {
         put(map, RenderType.entityGlint());
         put(map, RenderType.entityGlintDirect());
         put(map, RenderType.waterMask());
-        ModelBakery.DESTROY_TYPES.forEach((destroyType) -> {
-            put(map, destroyType);
-        });
+        ModelBakery.DESTROY_TYPES.forEach((destroyType) -> put(map, destroyType));
     });
     private final CERenderTypeBuffer bufferSource = new CERenderTypeBuffer(new BufferBuilder(256), fixedBuffers);
 

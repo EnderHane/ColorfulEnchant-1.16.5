@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @OnlyIn(Dist.CLIENT)
-public class ClientProxy{
+public final class ClientProxy{
 
     public static boolean isRendererReplacementExecuted = false;
 

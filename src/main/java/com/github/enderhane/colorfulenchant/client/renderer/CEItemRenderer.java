@@ -76,15 +76,14 @@ public class CEItemRenderer extends ItemRenderer {
     public void render(
         ItemStack itemStack,
         ItemCameraTransforms.TransformType transformType,
-        boolean leftHandHackery,
+        boolean leftHand,
         MatrixStack matrixStack,
         IRenderTypeBuffer renderTypeBuffer,
-        int lightmapCoord,
-        int overlayCoord,
+        int lightmap,
+        int overlay,
         IBakedModel bakedModel) {
-
-        CERenderTypeBuffer appointedBuffer = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
         if (!itemStack.isEmpty()) {
+            CERenderTypeBuffer appointedBuffer = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
             matrixStack.pushPose();
             boolean flag = transformType == ItemCameraTransforms.TransformType.GUI ||
                 transformType == ItemCameraTransforms.TransformType.GROUND ||
@@ -92,7 +91,7 @@ public class CEItemRenderer extends ItemRenderer {
             if (itemStack.getItem() == Items.TRIDENT && flag) {
                 bakedModel = itemModelShaper.getModelManager().getModel(new ModelResourceLocation("minecraft:trident#inventory"));
             }
-            bakedModel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(matrixStack, bakedModel, transformType, leftHandHackery);
+            bakedModel = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(matrixStack, bakedModel, transformType, leftHand);
             matrixStack.translate(-0.5D, -0.5D, -0.5D);
             if (!bakedModel.isCustomRenderer() && (itemStack.getItem() != Items.TRIDENT || flag)) {
                 boolean flag1;
@@ -103,23 +102,22 @@ public class CEItemRenderer extends ItemRenderer {
                     flag1 = true;
                 }
                 if (bakedModel.isLayered()) {
-                    net.minecraftforge.client.ForgeHooksClient.drawItemLayered(this, bakedModel, itemStack, matrixStack, renderTypeBuffer, lightmapCoord, overlayCoord, flag1);
+                    net.minecraftforge.client.ForgeHooksClient.drawItemLayered(this, bakedModel, itemStack, matrixStack, renderTypeBuffer, lightmap, overlay, flag1);
                 }
                 else {
                     RenderType renderType = RenderTypeLookup.getRenderType(itemStack, flag1);
                     IVertexBuilder itemBuilder = appointedBuffer.getBuffer(renderType);
-                            //getColoredFoilBufferDirect(renderTypeBuffer, renderType, true, itemStack.hasFoil());
-                    renderModelLists(bakedModel, itemStack, lightmapCoord, overlayCoord, matrixStack, itemBuilder);
+                    renderModelLists(bakedModel, itemStack, lightmap, overlay, matrixStack, itemBuilder);
                     if (itemStack.hasFoil()){
-                        renderFoil(bakedModel, itemStack, matrixStack, transformType, appointedBuffer, lightmapCoord, overlayCoord, renderType);
+                        renderFoil(bakedModel, itemStack, matrixStack, transformType, appointedBuffer, lightmap, overlay, renderType);
                     }
                 }
             } else {
-                itemStack.getItem().getItemStackTileEntityRenderer().renderByItem(itemStack, transformType, matrixStack, renderTypeBuffer, lightmapCoord, overlayCoord);
+                itemStack.getItem().getItemStackTileEntityRenderer().renderByItem(itemStack, transformType, matrixStack, renderTypeBuffer, lightmap, overlay);
             }
             matrixStack.popPose();
+            appointedBuffer.endBatchAfterAll();
         }
-        appointedBuffer.endBatchAfterAll();
     }
 
     private void renderFoil(
@@ -128,10 +126,9 @@ public class CEItemRenderer extends ItemRenderer {
         MatrixStack matrixStack,
         ItemCameraTransforms.TransformType transformType,
         IRenderTypeBuffer renderTypeBuffer,
-        int lightmapCoord,
-        int overlayCoord,
+        int lightmap,
+        int overlay,
         RenderType renderType){
-
         IVertexBuilder foilBuilder;
         if (itemStack.getItem()==Items.COMPASS) {
             matrixStack.pushPose();
@@ -148,19 +145,19 @@ public class CEItemRenderer extends ItemRenderer {
         } else {
             foilBuilder = renderTypeBuffer.getBuffer(CERenderType.coloredGlint());
         }
-        renderModelWithColor(matrixStack, bakedModel, foilBuilder, 0xffff9999, lightmapCoord, overlayCoord);
+        renderModelWithColor(matrixStack, bakedModel, foilBuilder, 0xffff9999, lightmap, overlay);
     }
 
-    private void renderModelWithColor(MatrixStack matrixStack, IBakedModel model, IVertexBuilder vertexBuilder, int color, int lightmapCoord, int overlayCoord){
+    private void renderModelWithColor(MatrixStack matrixStack, IBakedModel model, IVertexBuilder vertexBuilder, int color, int lightmap, int overlay){
         Random random = new Random();
         for (Direction direction: Direction.values()){
             random.setSeed(42L);
             List<BakedQuad> quads = model.getQuads(null, direction, random, null);
-            renderQuadWithColor(matrixStack, vertexBuilder, quads, color, lightmapCoord, overlayCoord);
+            renderQuadWithColor(matrixStack, vertexBuilder, quads, color, lightmap, overlay);
         }
         random.setSeed(42L);
         List<BakedQuad> quads = model.getQuads(null, null, random, null);
-        renderQuadWithColor(matrixStack, vertexBuilder, quads, color, lightmapCoord, overlayCoord);
+        renderQuadWithColor(matrixStack, vertexBuilder, quads, color, lightmap, overlay);
     }
 
     private void renderQuadWithColor(MatrixStack matrixStack, IVertexBuilder vertexBuilder, List<BakedQuad> quads, int color, int lightmapCoord, int overlayCoord){
@@ -170,7 +167,7 @@ public class CEItemRenderer extends ItemRenderer {
         float green = (float) ((color >> 8) & 0xff) / 255.f;
         float blue = (float) (color & 0xff) / 255.f;
         for (BakedQuad quad: quads){
-            vertexBuilder.addVertexData(entry, quad, red, green, blue ,1.f, lightmapCoord, overlayCoord, true);
+            vertexBuilder.addVertexData(entry, quad, red, green, blue ,1.0f, lightmapCoord, overlayCoord, true);
         }
     }
 
@@ -199,47 +196,6 @@ public class CEItemRenderer extends ItemRenderer {
             float blue = (float)(i & 255) / 255.0F;
             vertexBuilder.addVertexData(matrixstack$entry, bakedquad, red, green, blue, 1.0f ,lightmapCoord, overlayCoord, true);
         }
-
-    }
-
-    public static IVertexBuilder getColoredFoilBuffer(IRenderTypeBuffer buffer, RenderType renderType, boolean notEntity, boolean hasFoil) {
-        if (hasFoil) {
-            if (Minecraft.useShaderTransparency() && renderType == Atlases.translucentItemSheet()) {
-                return VertexBuilderUtils.create(buffer.getBuffer(CERenderType.coloredGlintTranslucent()), buffer.getBuffer(renderType)) ;
-            } else {
-                return VertexBuilderUtils.create(buffer.getBuffer(notEntity ? CERenderType.coloredGlint() : CERenderType.coloredEntityGlint()), buffer.getBuffer(renderType));
-            }
-        } else {
-            return buffer.getBuffer(renderType);
-        }
-    }
-
-    public static IVertexBuilder getColoredFoilBufferDirect(IRenderTypeBuffer buffer, RenderType renderType, boolean notEntity, boolean hasFoil) {
-        if (hasFoil) {
-            return VertexBuilderUtils.create(buffer.getBuffer(renderType), buffer.getBuffer(notEntity ? CERenderType.coloredGlintDirect() : CERenderType.coloredEntityGlintDirect()));
-        } else {
-            return buffer.getBuffer(renderType);
-        }
-    }
-
-    public static IVertexBuilder getColoredArmorFoilBuffer(IRenderTypeBuffer buffer, RenderType renderType, boolean notEntity, boolean hasFoil) {
-        if (hasFoil) {
-            if(Minecraft.useShaderTransparency() && renderType == Atlases.translucentItemSheet()){
-                return VertexBuilderUtils.create(buffer.getBuffer(CERenderType.glintTranslucent()), buffer.getBuffer(renderType));
-            } else {
-                return VertexBuilderUtils.create(buffer.getBuffer(notEntity ? CERenderType.coloredGlint() : CERenderType.coloredEntityGlint()), buffer.getBuffer(renderType));
-            }
-        } else {
-            return buffer.getBuffer(renderType);
-        }
-    }
-
-    public static IVertexBuilder getColoredCompassFoilBuffer(IRenderTypeBuffer buffer, RenderType renderType, MatrixStack.Entry entry) {
-        return VertexBuilderUtils.create(new MatrixApplyingVertexBuilder(buffer.getBuffer(CERenderType.coloredGlint()), entry.pose(), entry.normal()), buffer.getBuffer(renderType));
-    }
-
-    public static IVertexBuilder getColoredCompassFoilBufferDirect(IRenderTypeBuffer buffer, RenderType renderType, MatrixStack.Entry entry) {
-        return VertexBuilderUtils.create(new MatrixApplyingVertexBuilder(buffer.getBuffer(CERenderType.coloredGlintDirect()), entry.pose(), entry.normal()), buffer.getBuffer(renderType));
     }
 
     @Override
@@ -258,8 +214,8 @@ public class CEItemRenderer extends ItemRenderer {
     }
 
     @Override
-    public void renderStatic(ItemStack itemStack, ItemCameraTransforms.TransformType transformType, int lightmapCoord, int overlayCoord, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer) {
-        renderStatic(null, itemStack, transformType, false, matrixStack, renderTypeBuffer, null, lightmapCoord, overlayCoord);
+    public void renderStatic(ItemStack itemStack, ItemCameraTransforms.TransformType transformType, int lightmap, int overlay, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer) {
+        renderStatic(null, itemStack, transformType, false, matrixStack, renderTypeBuffer, null, lightmap, overlay);
     }
 
     @Override
@@ -286,7 +242,6 @@ public class CEItemRenderer extends ItemRenderer {
         RenderSystem.scalef(1.0F, -1.0F, 1.0F);
         RenderSystem.scalef(16.0F, 16.0F, 16.0F);
         MatrixStack matrixstack = new MatrixStack();
-        //IRenderTypeBuffer.Impl buffer = ModRenderTypeBuffers.getInstance().bufferSource();
         IRenderTypeBuffer.Impl buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         boolean flag = !bakedModel.usesBlockLight();
         if (flag) {
@@ -305,8 +260,7 @@ public class CEItemRenderer extends ItemRenderer {
 
     private void tryRenderGuiItem(@Nullable LivingEntity p_239387_1_, ItemStack p_239387_2_, int p_239387_3_, int p_239387_4_) {
         if (!p_239387_2_.isEmpty()) {
-            this.blitOffset += 50.0F;
-
+            blitOffset += 50.0F;
             try {
                 this.renderGuiItem(p_239387_2_, p_239387_3_, p_239387_4_, this.getModel(p_239387_2_, null, p_239387_1_));
             } catch (Throwable throwable) {
@@ -319,21 +273,20 @@ public class CEItemRenderer extends ItemRenderer {
                 crashreportcategory.setDetail("Item Foil", () -> String.valueOf(p_239387_2_.hasFoil()));
                 throw new ReportedException(crashreport);
             }
-
-            this.blitOffset -= 50.0F;
+            blitOffset -= 50.0F;
         }
     }
 
     public void renderAndDecorateItem(ItemStack p_180450_1_, int p_180450_2_, int p_180450_3_) {
-        this.tryRenderGuiItem(Minecraft.getInstance().player, p_180450_1_, p_180450_2_, p_180450_3_);
+        tryRenderGuiItem(Minecraft.getInstance().player, p_180450_1_, p_180450_2_, p_180450_3_);
     }
 
     public void renderAndDecorateFakeItem(ItemStack p_239390_1_, int p_239390_2_, int p_239390_3_) {
-        this.tryRenderGuiItem(null, p_239390_1_, p_239390_2_, p_239390_3_);
+        tryRenderGuiItem(null, p_239390_1_, p_239390_2_, p_239390_3_);
     }
 
     public void renderAndDecorateItem(LivingEntity p_184391_1_, ItemStack p_184391_2_, int p_184391_3_, int p_184391_4_) {
-        this.tryRenderGuiItem(p_184391_1_, p_184391_2_, p_184391_3_, p_184391_4_);
+        tryRenderGuiItem(p_184391_1_, p_184391_2_, p_184391_3_, p_184391_4_);
     }
 
     public void onResourceManagerReload(IResourceManager p_195410_1_) {
@@ -346,10 +299,6 @@ public class CEItemRenderer extends ItemRenderer {
 
     public ItemRenderer getOriginalItemRenderer(){
         return originalItemRenderer;
-    }
-
-    public void dummy(){
-
     }
 
 }
