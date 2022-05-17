@@ -96,17 +96,6 @@ public class CERenderType extends RenderType {
                     .setTexturingState(ENTITY_GLINT_TEXTURING)
                     .createCompositeState(false));
 
-    public static void registerAll(){
-        RenderTypeBuffers renderBuffer = Minecraft.getInstance().renderBuffers();
-        renderBuffer.fixedBuffers.put(coloredGlint(), new BufferBuilder(coloredGlint().bufferSize()));
-        renderBuffer.fixedBuffers.put(coloredGlintTranslucent(), new BufferBuilder(coloredGlintTranslucent().bufferSize()));
-        renderBuffer.fixedBuffers.put(coloredGlintDirect(), new BufferBuilder(coloredGlintDirect().bufferSize()));
-        renderBuffer.fixedBuffers.put(coloredArmorGlint(), new BufferBuilder(coloredArmorGlint().bufferSize()));
-        renderBuffer.fixedBuffers.put(coloredArmorEntityGlint(), new BufferBuilder(coloredArmorEntityGlint().bufferSize()));
-        renderBuffer.fixedBuffers.put(coloredEntityGlint(), new BufferBuilder(coloredEntityGlint().bufferSize()));
-        renderBuffer.fixedBuffers.put(coloredEntityGlintDirect(), new BufferBuilder(coloredEntityGlintDirect().bufferSize()));
-    }
-
     public static RenderType coloredGlintTranslucent() {
         return COLORED_GLINT_TRANSLUCENT;
     }
