@@ -1,12 +1,11 @@
 package com.github.enderhane.colorfulenchant.client.renderer;
 
 import com.github.enderhane.colorfulenchant.ColorfulEnchant;
+import com.github.enderhane.colorfulenchant.client.renderer.vertex.MatrixColorVertexBuilder;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
-import com.mojang.blaze3d.vertex.MatrixApplyingVertexBuilder;
-import com.mojang.blaze3d.vertex.VertexBuilderUtils;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.block.Block;
 import net.minecraft.block.BreakableBlock;
@@ -42,7 +41,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * 继承 {@link net.minecraft.client.renderer.ItemRenderer}
+ * @see net.minecraft.client.renderer.ItemRenderer
  */
 @OnlyIn(Dist.CLIENT)
 public class CEItemRenderer extends ItemRenderer {
@@ -60,12 +59,6 @@ public class CEItemRenderer extends ItemRenderer {
     private final ShieldModel shieldModel = new ShieldModel();
     private final TridentModel tridentModel = new TridentModel();
 
-    /**
-     * @param originalItemRenderer 应当传入原有的 ItemRenderer。 将作为一个备用渲染器
-     * @param textureManager 应当传入 Minecraft 中的单例 TextureManager
-     * @param modelManager 应当传入 Minecraft 中的单例 ModelManager
-     * @param itemColors 应当传入 Minecraft 中的单例 ItemColors
-     */
     public CEItemRenderer(ItemRenderer originalItemRenderer, TextureManager textureManager, ModelManager modelManager, ItemColors itemColors) {
         super(textureManager, modelManager, itemColors);
         this.itemModelShaper = originalItemRenderer.getItemModelShaper();
@@ -75,20 +68,14 @@ public class CEItemRenderer extends ItemRenderer {
     }
 
     /**
-     * 覆写的核心渲染方法，分离了物品和光效的渲染
+     * 覆写的核心渲染方法，分离了物品和光效的渲染，
+     * <p>并且接管了三叉戟和盾牌</p>
      */
     @Override
-    public void render(
-        ItemStack itemStack,
-        ItemCameraTransforms.TransformType transformType,
-        boolean leftHand,
-        MatrixStack matrixStack,
-        IRenderTypeBuffer renderTypeBuffer,
-        int lightmap,
-        int overlay,
-        IBakedModel bakedModel) {
+    public void render(ItemStack itemStack, ItemCameraTransforms.TransformType transformType, boolean leftHand,
+                       MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, int lightmap, int overlay, IBakedModel bakedModel) {
         if (!itemStack.isEmpty()) {
-            CERenderTypeBuffer appointedBuffer = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
+            CERenderTypeBuffer appointedBuffer = CEBufferSourceHelper.bufferSource();
             matrixStack.pushPose();
             boolean flag = transformType == ItemCameraTransforms.TransformType.GUI ||
                 transformType == ItemCameraTransforms.TransformType.GROUND ||
@@ -159,7 +146,10 @@ public class CEItemRenderer extends ItemRenderer {
         }
     }
 
-    private void renderFoilModel(Model model, ItemStack itemStack, MatrixStack matrixStack, IRenderTypeBuffer bufferSource, int lightmap, int overlay, RenderType renderType){
+    /**
+     * 渲染三叉戟和盾牌的光效
+     */
+    public void renderFoilModel(Model model, ItemStack itemStack, MatrixStack matrixStack, IRenderTypeBuffer bufferSource, int lightmap, int overlay, RenderType renderType){
         IVertexBuilder foilBuilder = bufferSource.getBuffer(renderType);
         model.renderToBuffer(matrixStack, foilBuilder, lightmap, overlay , 1.0f, 0.5f, 0.5f, 1.0f);
     }
@@ -167,16 +157,10 @@ public class CEItemRenderer extends ItemRenderer {
     /**
      * 独立光效渲染
      */
-    private void renderFoil(
-        IBakedModel bakedModel,
-        ItemStack itemStack,
-        MatrixStack matrixStack,
-        ItemCameraTransforms.TransformType transformType,
-        IRenderTypeBuffer renderTypeBuffer,
-        int lightmap,
-        int overlay,
-        RenderType renderType){
+    public void renderFoil(IBakedModel bakedModel, ItemStack itemStack, MatrixStack matrixStack, ItemCameraTransforms.TransformType transformType,
+                            IRenderTypeBuffer renderTypeBuffer, int lightmap, int overlay, RenderType renderType){
         IVertexBuilder foilBuilder;
+        /* TODO: fix compass glint color */
         if (itemStack.getItem()==Items.COMPASS) {
             matrixStack.pushPose();
             MatrixStack.Entry matrixStack$entry = matrixStack.last();
@@ -185,7 +169,9 @@ public class CEItemRenderer extends ItemRenderer {
             } else if (transformType.firstPerson()) {
                 matrixStack$entry.pose().multiply(0.75F);
             }
-            foilBuilder = new MatrixApplyingVertexBuilder(renderTypeBuffer.getBuffer(CERenderType.coloredGlint()), matrixStack$entry.pose(), matrixStack$entry.normal());
+            foilBuilder = new MatrixColorVertexBuilder(renderTypeBuffer.getBuffer(CERenderType.coloredGlint()), matrixStack$entry.pose(), matrixStack$entry.normal());
+            //foilBuilder = renderTypeBuffer.getBuffer(CERenderType.coloredGlint());
+            //foilBuilder = new MatrixApplyingVertexBuilder(renderTypeBuffer.getBuffer(CERenderType.coloredGlint()), matrixStack$entry.pose(), matrixStack$entry.normal());
             matrixStack.popPose();
         } else if(Minecraft.useShaderTransparency() && renderType == Atlases.translucentItemSheet()){
             foilBuilder = renderTypeBuffer.getBuffer(CERenderType.coloredGlintTranslucent());
@@ -195,7 +181,7 @@ public class CEItemRenderer extends ItemRenderer {
         renderModelWithColor(matrixStack, bakedModel, foilBuilder, 0xffff9999, lightmap, overlay);
     }
 
-    private void renderModelWithColor(MatrixStack matrixStack, IBakedModel model, IVertexBuilder vertexBuilder, int color, int lightmap, int overlay){
+    public void renderModelWithColor(MatrixStack matrixStack, IBakedModel model, IVertexBuilder vertexBuilder, int color, int lightmap, int overlay){
         Random random = new Random();
         for (Direction direction: Direction.values()){
             random.setSeed(42L);
@@ -207,7 +193,7 @@ public class CEItemRenderer extends ItemRenderer {
         renderQuadWithColor(matrixStack, vertexBuilder, quads, color, lightmap, overlay);
     }
 
-    private void renderQuadWithColor(MatrixStack matrixStack, IVertexBuilder vertexBuilder, List<BakedQuad> quads, int color, int lightmap, int overlay){
+    public void renderQuadWithColor(MatrixStack matrixStack, IVertexBuilder vertexBuilder, List<BakedQuad> quads, int color, int lightmap, int overlay){
         MatrixStack.Entry entry = matrixStack.last();
         float alpha = (float) ((color >> 24) & 0xff) / 255.f;
         float red = (float) ((color >> 16) & 0xff) / 255.f;
@@ -246,28 +232,30 @@ public class CEItemRenderer extends ItemRenderer {
     }
 
     @Override
-    public IBakedModel getModel(ItemStack p_184393_1_, @Nullable World p_184393_2_, @Nullable LivingEntity p_184393_3_) {
-        Item item = p_184393_1_.getItem();
+    public IBakedModel getModel(ItemStack itemStack, @Nullable World world, @Nullable LivingEntity entity) {
+        Item item = itemStack.getItem();
         IBakedModel bakedModel;
         if (item == Items.TRIDENT) {
             bakedModel = itemModelShaper.getModelManager().getModel(new ModelResourceLocation("minecraft:trident_in_hand#inventory"));
         } else {
-            bakedModel = itemModelShaper.getItemModel(p_184393_1_);
+            bakedModel = itemModelShaper.getItemModel(itemStack);
         }
-        ClientWorld clientworld = p_184393_2_ instanceof ClientWorld ? (ClientWorld)p_184393_2_ : null;
-        IBakedModel bakedModel1 = bakedModel.getOverrides().resolve(bakedModel, p_184393_1_, clientworld, p_184393_3_);
-        return bakedModel1 == null ? this.itemModelShaper.getModelManager().getMissingModel() : bakedModel1;
+        ClientWorld clientworld = world instanceof ClientWorld ? (ClientWorld)world : null;
+        IBakedModel overriddenModel = bakedModel.getOverrides().resolve(bakedModel, itemStack, clientworld, entity);
+        return overriddenModel == null ? itemModelShaper.getModelManager().getMissingModel() : overriddenModel;
     }
 
     @Override
-    public void renderStatic(ItemStack itemStack, ItemCameraTransforms.TransformType transformType, int lightmap, int overlay, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer) {
+    public void renderStatic(ItemStack itemStack, ItemCameraTransforms.TransformType transformType, int lightmap, int overlay,
+                             MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer) {
         renderStatic(null, itemStack, transformType, false, matrixStack, renderTypeBuffer, null, lightmap, overlay);
     }
 
     @Override
-    public void renderStatic(@Nullable LivingEntity entity, ItemStack itemStack, ItemCameraTransforms.TransformType transformType, boolean leftHand, MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, @Nullable World world, int lightmapCoord, int overlayCoord) {
+    public void renderStatic(@Nullable LivingEntity entity, ItemStack itemStack, ItemCameraTransforms.TransformType transformType, boolean leftHand,
+                             MatrixStack matrixStack, IRenderTypeBuffer renderTypeBuffer, @Nullable World world, int lightmapCoord, int overlayCoord) {
         if (!itemStack.isEmpty()) {
-            IBakedModel bakedModel = this.getModel(itemStack, world, entity);
+            IBakedModel bakedModel = getModel(itemStack, world, entity);
             render(itemStack, transformType, leftHand, matrixStack, renderTypeBuffer, lightmapCoord, overlayCoord, bakedModel);
         }
     }
@@ -304,43 +292,48 @@ public class CEItemRenderer extends ItemRenderer {
         RenderSystem.popMatrix();
     }
 
-    private void tryRenderGuiItem(@Nullable LivingEntity p_239387_1_, ItemStack p_239387_2_, int p_239387_3_, int p_239387_4_) {
-        if (!p_239387_2_.isEmpty()) {
+    private void tryRenderGuiItem(@Nullable LivingEntity entity, ItemStack itemStack, int x, int y) {
+        if (!itemStack.isEmpty()) {
             blitOffset += 50.0F;
             try {
-                this.renderGuiItem(p_239387_2_, p_239387_3_, p_239387_4_, this.getModel(p_239387_2_, null, p_239387_1_));
+                renderGuiItem(itemStack, x, y, getModel(itemStack, null, entity));
             } catch (Throwable throwable) {
                 CrashReport crashreport = CrashReport.forThrowable(throwable, "Rendering item");
                 CrashReportCategory crashreportcategory = crashreport.addCategory("Item being rendered");
-                crashreportcategory.setDetail("Item Type", () -> String.valueOf(p_239387_2_.getItem()));
-                crashreportcategory.setDetail("Registry Name", () -> String.valueOf(p_239387_2_.getItem().getRegistryName()));
-                crashreportcategory.setDetail("Item Damage", () -> String.valueOf(p_239387_2_.getDamageValue()));
-                crashreportcategory.setDetail("Item NBT", () -> String.valueOf(p_239387_2_.getTag()));
-                crashreportcategory.setDetail("Item Foil", () -> String.valueOf(p_239387_2_.hasFoil()));
+                crashreportcategory.setDetail("Item Type", () -> String.valueOf(itemStack.getItem()));
+                crashreportcategory.setDetail("Registry Name", () -> String.valueOf(itemStack.getItem().getRegistryName()));
+                crashreportcategory.setDetail("Item Damage", () -> String.valueOf(itemStack.getDamageValue()));
+                crashreportcategory.setDetail("Item NBT", () -> String.valueOf(itemStack.getTag()));
+                crashreportcategory.setDetail("Item Foil", () -> String.valueOf(itemStack.hasFoil()));
                 throw new ReportedException(crashreport);
             }
             blitOffset -= 50.0F;
         }
     }
 
-    public void renderAndDecorateItem(ItemStack p_180450_1_, int p_180450_2_, int p_180450_3_) {
-        tryRenderGuiItem(Minecraft.getInstance().player, p_180450_1_, p_180450_2_, p_180450_3_);
+    @Override
+    public void renderAndDecorateItem(ItemStack itemStack, int x, int y) {
+        tryRenderGuiItem(Minecraft.getInstance().player, itemStack, x, y);
     }
 
-    public void renderAndDecorateFakeItem(ItemStack p_239390_1_, int p_239390_2_, int p_239390_3_) {
-        tryRenderGuiItem(null, p_239390_1_, p_239390_2_, p_239390_3_);
+    @Override
+    public void renderAndDecorateFakeItem(ItemStack itemStack, int x, int y) {
+        tryRenderGuiItem(null, itemStack, x, y);
     }
 
-    public void renderAndDecorateItem(LivingEntity p_184391_1_, ItemStack p_184391_2_, int p_184391_3_, int p_184391_4_) {
-        tryRenderGuiItem(p_184391_1_, p_184391_2_, p_184391_3_, p_184391_4_);
+    @Override
+    public void renderAndDecorateItem(LivingEntity entity, ItemStack itemStack, int x, int y) {
+        tryRenderGuiItem(entity, itemStack, x, y);
     }
 
+    @Override
     public void onResourceManagerReload(IResourceManager p_195410_1_) {
-        this.itemModelShaper.rebuildCache();
+        itemModelShaper.rebuildCache();
     }
 
+    @Override
     public ItemModelMesher getItemModelShaper() {
-        return this.itemModelShaper;
+        return itemModelShaper;
     }
 
     public ItemRenderer getOriginalItemRenderer(){

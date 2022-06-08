@@ -58,7 +58,7 @@ public class CERenderTypeBuffer extends IRenderTypeBuffer.Impl {
 
     /**
      * 先遍历处理 fixedBuffers 再处理 lastState
-     * <p> {@link com.github.enderhane.colorfulenchant.client.renderer.CEBufferSource#fixedBuffers}</p>
+     * @see CEBufferSourceHelper
      */
     public void endBatchAfterAll(){
         for(RenderType rendertype : fixedBuffers.keySet()) {

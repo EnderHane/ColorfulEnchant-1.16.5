@@ -1,8 +1,8 @@
 package com.github.enderhane.colorfulenchant.client.renderer.entity.layers;
 
+import com.github.enderhane.colorfulenchant.client.renderer.CEBufferSourceHelper;
 import com.github.enderhane.colorfulenchant.client.renderer.CERenderType;
 import com.github.enderhane.colorfulenchant.client.renderer.CERenderTypeBuffer;
-import com.github.enderhane.colorfulenchant.client.renderer.CERenderUtil;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
@@ -19,7 +19,6 @@ import net.minecraft.item.IDyeableArmorItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 
 public class CEBipedArmorLayer<T extends LivingEntity, M extends BipedModel<T>, A extends BipedModel<T>> extends BipedArmorLayer<T, M, A> {
@@ -73,7 +72,7 @@ public class CEBipedArmorLayer<T extends LivingEntity, M extends BipedModel<T>, 
      * <p>此方法单独渲染装备</p>
      */
     private void renderModel(MatrixStack matrixStack, IRenderTypeBuffer bufferSource, int lightmap, A model, float red, float green, float blue, ResourceLocation armorResource) {
-        CERenderTypeBuffer appointedBufferSource = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
+        CERenderTypeBuffer appointedBufferSource = CEBufferSourceHelper.bufferSource();
         RenderType armorRenderType = RenderType.armorCutoutNoCull(armorResource);
         IVertexBuilder armorBuilder = appointedBufferSource.getBuffer(armorRenderType);
         model.renderToBuffer(matrixStack, armorBuilder, lightmap, OverlayTexture.NO_OVERLAY, red, green, blue, 1.0F);
@@ -84,7 +83,7 @@ public class CEBipedArmorLayer<T extends LivingEntity, M extends BipedModel<T>, 
      * 此方法单独渲染光效
      */
     private void renderFoilModel(MatrixStack matrixStack, IRenderTypeBuffer bufferSource, int lightmap, A model, float red, float green, float blue){
-        CERenderTypeBuffer appointedBufferSource = CERenderUtil.CE_BUFFER_SOURCE.bufferSource();
+        CERenderTypeBuffer appointedBufferSource = CEBufferSourceHelper.bufferSource();
         RenderType foilRenderType = CERenderType.coloredArmorEntityGlint();
         IVertexBuilder foilBuilder = appointedBufferSource.getBuffer(foilRenderType);
         model.renderToBuffer(matrixStack, foilBuilder, lightmap, OverlayTexture.NO_OVERLAY, red, blue, green, 1.0f);

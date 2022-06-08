@@ -7,10 +7,10 @@ import net.minecraft.util.Util;
 
 import java.util.SortedMap;
 
-public class CEBufferSource {
+public class CEBufferSourceHelper {
 
-    private final RegionRenderCacheBuilder fixedBufferPack = new RegionRenderCacheBuilder();
-    public final SortedMap<RenderType, BufferBuilder> fixedBuffers = Util.make(new Object2ObjectLinkedOpenHashMap<>(), (map) -> {
+    private static final RegionRenderCacheBuilder fixedBufferPack = new RegionRenderCacheBuilder();
+    private static final SortedMap<RenderType, BufferBuilder> fixedBuffers = Util.make(new Object2ObjectLinkedOpenHashMap<>(), (map) -> {
         map.put(Atlases.solidBlockSheet(), fixedBufferPack.builder(RenderType.solid()));
         map.put(Atlases.cutoutBlockSheet(), fixedBufferPack.builder(RenderType.cutout()));
         map.put(Atlases.bannerSheet(), fixedBufferPack.builder(RenderType.cutoutMipped()));
@@ -31,13 +31,13 @@ public class CEBufferSource {
         put(map, RenderType.waterMask());
         ModelBakery.DESTROY_TYPES.forEach((destroyType) -> put(map, destroyType));
     });
-    private final CERenderTypeBuffer bufferSource = new CERenderTypeBuffer(new BufferBuilder(256), fixedBuffers);
+    private static final CERenderTypeBuffer bufferSource = new CERenderTypeBuffer(new BufferBuilder(256), fixedBuffers);
 
-    private static void put(Object2ObjectLinkedOpenHashMap<RenderType, BufferBuilder> p_228486_0_, RenderType p_228486_1_) {
-        p_228486_0_.put(p_228486_1_, new BufferBuilder(p_228486_1_.bufferSize()));
+    private static void put(Object2ObjectLinkedOpenHashMap<RenderType, BufferBuilder> map, RenderType type) {
+        map.put(type, new BufferBuilder(type.bufferSize()));
     }
 
-    public CERenderTypeBuffer bufferSource() {
+    public static CERenderTypeBuffer bufferSource() {
         return bufferSource;
     }
 

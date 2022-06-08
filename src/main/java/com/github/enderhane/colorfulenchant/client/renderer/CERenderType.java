@@ -2,6 +2,7 @@ package com.github.enderhane.colorfulenchant.client.renderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RenderState;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeBuffers;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -33,13 +34,13 @@ public class CERenderType extends RenderType {
                     .setTextureState(new TextureState(CEItemRenderer.CUSTOM_GLINT_LOCATION, true, false))
                     .setWriteMaskState(COLOR_WRITE)
                     .setCullState(NO_CULL)
-                    .setDepthTestState(EQUAL_DEPTH_TEST)
+                    .setDepthTestState(RenderState.EQUAL_DEPTH_TEST)
                     .setTransparencyState(GLINT_TRANSPARENCY)
-                    .setTexturingState(GLINT_TEXTURING)
+                    .setTexturingState(RenderState.GLINT_TEXTURING)
                     .createCompositeState(false));
 
     public static final RenderType COLORED_GLINT_DIRECT = create(
-            "colored_glint_direct", DefaultVertexFormats.POSITION_COLOR_TEX, 7, 256,
+            "colored_glint_direct", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 256,
             State.builder()
                     .setTextureState(new TextureState(CEItemRenderer.CUSTOM_GLINT_LOCATION, true, false))
                     .setWriteMaskState(COLOR_WRITE)
@@ -50,7 +51,7 @@ public class CERenderType extends RenderType {
                     .createCompositeState(false));
 
     public static final RenderType COLORED_ARMOR_GLINT = create(
-            "colored_armor_glint", DefaultVertexFormats.POSITION_COLOR_TEX, 7, 256,
+            "colored_armor_glint", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 256,
             State.builder()
                     .setTextureState(new TextureState(CEItemRenderer.CUSTOM_GLINT_LOCATION, true, false))
                     .setWriteMaskState(COLOR_WRITE)
@@ -62,7 +63,7 @@ public class CERenderType extends RenderType {
                     .createCompositeState(false));
 
     public static final RenderType COLORED_ARMOR_ENTITY_GLINT = create(
-            "colored_armor_entity_glint", DefaultVertexFormats.POSITION_COLOR_TEX, 7, 256,
+            "colored_armor_entity_glint", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 256,
             State.builder()
                     .setTextureState(new TextureState(CEItemRenderer.CUSTOM_GLINT_LOCATION, true, false))
                     .setWriteMaskState(COLOR_WRITE)
@@ -74,7 +75,7 @@ public class CERenderType extends RenderType {
                     .createCompositeState(false));
 
     public static final RenderType COLORED_ENTITY_GLINT = create(
-            "colored_entity_glint", DefaultVertexFormats.POSITION_COLOR_TEX, 7, 256,
+            "colored_entity_glint", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 256,
             State.builder()
                     .setTextureState(new TextureState(CEItemRenderer.CUSTOM_GLINT_LOCATION, true, false))
                     .setWriteMaskState(COLOR_WRITE)
@@ -86,7 +87,7 @@ public class CERenderType extends RenderType {
                     .createCompositeState(false));
 
     public static final RenderType COLORED_ENTITY_GLINT_DIRECT = create(
-            "colored_entity_glint_direct", DefaultVertexFormats.POSITION_COLOR_TEX, 7, 256,
+            "colored_entity_glint_direct", DefaultVertexFormats.POSITION_COLOR_TEX, GL11.GL_QUADS, 256,
             State.builder()
                     .setTextureState(new TextureState(CEItemRenderer.CUSTOM_GLINT_LOCATION, true, false))
                     .setWriteMaskState(COLOR_WRITE)

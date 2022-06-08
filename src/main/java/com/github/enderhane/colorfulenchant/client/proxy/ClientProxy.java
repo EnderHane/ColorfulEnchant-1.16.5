@@ -2,21 +2,15 @@ package com.github.enderhane.colorfulenchant.client.proxy;
 
 import com.github.enderhane.colorfulenchant.ColorfulEnchant;
 import com.github.enderhane.colorfulenchant.client.renderer.CEItemRenderer;
-import com.github.enderhane.colorfulenchant.client.renderer.CERenderType;
+import com.github.enderhane.colorfulenchant.client.renderer.entity.CETridentRenderer;
 import com.github.enderhane.colorfulenchant.client.renderer.entity.layers.CEBipedArmorLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.renderer.FirstPersonRenderer;
-import net.minecraft.client.renderer.color.ItemColors;
 import net.minecraft.client.renderer.entity.*;
 import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
-import net.minecraft.client.renderer.entity.model.ArmorStandArmorModel;
 import net.minecraft.client.renderer.entity.model.BipedModel;
-import net.minecraft.client.renderer.entity.model.DrownedModel;
-import net.minecraft.client.renderer.entity.model.ZombieModel;
-import net.minecraft.client.renderer.model.ModelManager;
-import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.entity.EntityType;
 import net.minecraft.resources.IReloadableResourceManager;
 import net.minecraftforge.api.distmarker.Dist;
@@ -30,16 +24,13 @@ import java.util.Map;
 @OnlyIn(Dist.CLIENT)
 public final class ClientProxy{
 
-    private static boolean isRendererReplacementExecuted = false;
+    private static boolean isRendererReplacementSuccessful = false;
 
-    /**
-     * 渲染器修改入口方法
-     */
     public static void init() {
-        if (!isRendererReplacementExecuted){
+        if (!isRendererReplacementSuccessful){
             replaceItemRenderer();
             replaceArmorLayer();
-            isRendererReplacementExecuted = true;
+            isRendererReplacementSuccessful = true;
         }
     }
 
@@ -67,10 +58,11 @@ public final class ClientProxy{
             return false;
         }
         EntityRendererManager entityRendererManager = minecraft.getEntityRenderDispatcher();
-        entityRendererManager.register(EntityType.EXPERIENCE_BOTTLE, new SpriteRenderer<>(entityRendererManager, modItemRenderer));
-        entityRendererManager.register(EntityType.ITEM, new ItemRenderer(entityRendererManager, modItemRenderer));
-        entityRendererManager.register(EntityType.ITEM_FRAME, new ItemFrameRenderer(entityRendererManager, modItemRenderer));
-        entityRendererManager.register(EntityType.POTION, new SpriteRenderer<>(entityRendererManager, modItemRenderer));
+        entityRendererManager.renderers.put(EntityType.EXPERIENCE_BOTTLE, new SpriteRenderer<>(entityRendererManager, modItemRenderer));
+        entityRendererManager.renderers.put(EntityType.ITEM, new ItemRenderer(entityRendererManager, modItemRenderer));
+        entityRendererManager.renderers.put(EntityType.ITEM_FRAME, new ItemFrameRenderer(entityRendererManager, modItemRenderer));
+        entityRendererManager.renderers.put(EntityType.POTION, new SpriteRenderer<>(entityRendererManager, modItemRenderer));
+        entityRendererManager.renderers.put(EntityType.TRIDENT, new CETridentRenderer(entityRendererManager));
         ((IReloadableResourceManager)(minecraft.getResourceManager())).registerReloadListener(modItemRenderer);
         return true;
     }
@@ -90,7 +82,7 @@ public final class ClientProxy{
                 layerList.replaceAll(e -> e instanceof BipedArmorLayer ? delegateArmorLayer((BipedArmorLayer) e, entry.getKey()) : e);
             }
             for (Map.Entry<EntityType<?>, EntityRenderer<?>> entry: minecraft.getEntityRenderDispatcher().renderers.entrySet()){
-                EntityRenderer renderer = entry.getValue();
+                EntityRenderer<?> renderer = entry.getValue();
                 if (renderer instanceof LivingRenderer){
                     List layerList = (List) layers_LivingRenderer.get(renderer);
                     layerList.replaceAll(e -> e instanceof BipedArmorLayer ? delegateArmorLayer((BipedArmorLayer) e, entry.getKey()) : e);
