@@ -160,7 +160,6 @@ public class CEItemRenderer extends ItemRenderer {
     public void renderFoil(IBakedModel bakedModel, ItemStack itemStack, MatrixStack matrixStack, ItemCameraTransforms.TransformType transformType,
                             IRenderTypeBuffer renderTypeBuffer, int lightmap, int overlay, RenderType renderType){
         IVertexBuilder foilBuilder;
-        /* TODO: fix compass glint color */
         if (itemStack.getItem()==Items.COMPASS) {
             matrixStack.pushPose();
             MatrixStack.Entry matrixStack$entry = matrixStack.last();
@@ -170,8 +169,6 @@ public class CEItemRenderer extends ItemRenderer {
                 matrixStack$entry.pose().multiply(0.75F);
             }
             foilBuilder = new MatrixColorVertexBuilder(renderTypeBuffer.getBuffer(CERenderType.coloredGlint()), matrixStack$entry.pose(), matrixStack$entry.normal());
-            //foilBuilder = renderTypeBuffer.getBuffer(CERenderType.coloredGlint());
-            //foilBuilder = new MatrixApplyingVertexBuilder(renderTypeBuffer.getBuffer(CERenderType.coloredGlint()), matrixStack$entry.pose(), matrixStack$entry.normal());
             matrixStack.popPose();
         } else if(Minecraft.useShaderTransparency() && renderType == Atlases.translucentItemSheet()){
             foilBuilder = renderTypeBuffer.getBuffer(CERenderType.coloredGlintTranslucent());

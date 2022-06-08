@@ -4,11 +4,13 @@ import com.github.enderhane.colorfulenchant.ColorfulEnchant;
 import com.github.enderhane.colorfulenchant.client.renderer.CEItemRenderer;
 import com.github.enderhane.colorfulenchant.client.renderer.entity.CETridentRenderer;
 import com.github.enderhane.colorfulenchant.client.renderer.entity.layers.CEBipedArmorLayer;
+import com.github.enderhane.colorfulenchant.client.renderer.entity.layers.CEElytraLayer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.renderer.FirstPersonRenderer;
 import net.minecraft.client.renderer.entity.*;
 import net.minecraft.client.renderer.entity.layers.BipedArmorLayer;
+import net.minecraft.client.renderer.entity.layers.ElytraLayer;
 import net.minecraft.client.renderer.entity.layers.LayerRenderer;
 import net.minecraft.client.renderer.entity.model.BipedModel;
 import net.minecraft.entity.EntityType;
@@ -68,7 +70,7 @@ public final class ClientProxy{
     }
 
     /**
-     * 装备渲染器修改方法
+     * 装备渲染器修改（鞘翅同理）
      * @return 无作用
      */
     private static boolean replaceArmorLayer(){
@@ -79,13 +81,15 @@ public final class ClientProxy{
             for (Map.Entry<String, PlayerRenderer> entry : minecraft.getEntityRenderDispatcher().playerRenderers.entrySet()) {
                 PlayerRenderer playerRenderer = entry.getValue();
                 List layerList = (List) layers_LivingRenderer.get(playerRenderer);
-                layerList.replaceAll(e -> e instanceof BipedArmorLayer ? delegateArmorLayer((BipedArmorLayer) e, entry.getKey()) : e);
+                layerList.replaceAll(e -> e instanceof BipedArmorLayer ? modifiedArmorLayer((BipedArmorLayer) e, entry.getKey()) : e);
+                layerList.replaceAll(e -> e instanceof ElytraLayer ? modifiedElytraLayer((ElytraLayer) e, entry.getKey()) : e);
             }
             for (Map.Entry<EntityType<?>, EntityRenderer<?>> entry: minecraft.getEntityRenderDispatcher().renderers.entrySet()){
                 EntityRenderer<?> renderer = entry.getValue();
                 if (renderer instanceof LivingRenderer){
                     List layerList = (List) layers_LivingRenderer.get(renderer);
-                    layerList.replaceAll(e -> e instanceof BipedArmorLayer ? delegateArmorLayer((BipedArmorLayer) e, entry.getKey()) : e);
+                    layerList.replaceAll(e -> e instanceof BipedArmorLayer ? modifiedArmorLayer((BipedArmorLayer) e, entry.getKey()) : e);
+                    layerList.replaceAll(e -> e instanceof ElytraLayer ? modifiedElytraLayer((ElytraLayer) e, entry.getKey()) : e);
                 }
             }
         } catch (IllegalAccessException | IllegalArgumentException e) {
@@ -97,10 +101,10 @@ public final class ClientProxy{
 
     /**
      * 拆除原装备渲染器，重组一个新的渲染器
-     * @param delegate 原渲染器
+     * @param original 原渲染器
      * @return 返回新渲染器，如果出现异常则返回原渲染器
      */
-    private static BipedArmorLayer delegateArmorLayer(BipedArmorLayer delegate, Object info){
+    private static BipedArmorLayer modifiedArmorLayer(BipedArmorLayer original, Object info){
         final Field renderer = ObfuscationReflectionHelper.findField(LayerRenderer.class, "field_215335_a");
         final Field innerModel = ObfuscationReflectionHelper.findField(BipedArmorLayer.class, "field_177189_c");
         final Field outerModel = ObfuscationReflectionHelper.findField(BipedArmorLayer.class, "field_177186_d");
@@ -108,15 +112,28 @@ public final class ClientProxy{
             renderer.setAccessible(true);
             innerModel.setAccessible(true);
             outerModel.setAccessible(true);
-            IEntityRenderer rd = (IEntityRenderer) renderer.get(delegate);
-            BipedModel in = (BipedModel) innerModel.get(delegate);
-            BipedModel out = (BipedModel) outerModel.get(delegate);
-            return new CEBipedArmorLayer<>(rd, in, out);
+            IEntityRenderer rd = (IEntityRenderer) renderer.get(original);
+            BipedModel in = (BipedModel) innerModel.get(original);
+            BipedModel out = (BipedModel) outerModel.get(original);
+            return new CEBipedArmorLayer(rd, in, out);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             ColorfulEnchant.getLogger().error("ArmorLayer transformation failed: " + info.toString());
         }
-        return delegate;
+        return original;
+    }
+
+    private static ElytraLayer modifiedElytraLayer(ElytraLayer original, Object info){
+        final Field renderer = ObfuscationReflectionHelper.findField(LayerRenderer.class, "field_215335_a");
+        try {
+            renderer.setAccessible(true);
+            IEntityRenderer rd = (IEntityRenderer) renderer.get(original);
+            return new CEElytraLayer(rd);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            ColorfulEnchant.getLogger().error("ElytraLayer transformation failed: " + info.toString());
+        }
+        return original;
     }
 
 }
