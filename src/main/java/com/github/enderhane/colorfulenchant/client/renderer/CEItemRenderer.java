@@ -51,9 +51,6 @@ public class CEItemRenderer extends ItemRenderer {
     private final ItemModelMesher itemModelShaper;
     private final TextureManager textureManager;
     private final ItemColors itemColors;
-    /**
-     * 备用 ItemRenderer
-     */
     private final ItemRenderer originalItemRenderer;
 
     private final ShieldModel shieldModel = new ShieldModel();
@@ -68,8 +65,7 @@ public class CEItemRenderer extends ItemRenderer {
     }
 
     /**
-     * 覆写的核心渲染方法，分离了物品和光效的渲染，
-     * <p>并且接管了三叉戟和盾牌</p>
+     * 接管了三叉戟和盾牌
      */
     @Override
     public void render(ItemStack itemStack, ItemCameraTransforms.TransformType transformType, boolean leftHand,
@@ -155,7 +151,7 @@ public class CEItemRenderer extends ItemRenderer {
     }
 
     /**
-     * 独立光效渲染
+     * 独立光效
      */
     public void renderFoil(IBakedModel bakedModel, ItemStack itemStack, MatrixStack matrixStack, ItemCameraTransforms.TransformType transformType,
                             IRenderTypeBuffer renderTypeBuffer, int lightmap, int overlay, RenderType renderType){
