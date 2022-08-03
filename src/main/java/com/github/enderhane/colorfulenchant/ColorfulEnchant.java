@@ -48,7 +48,7 @@ public class ColorfulEnchant
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
-        ClientProxy.init();
+        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> ClientProxy::init);
         // do something that can only be done on the client
         //LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().options);
     }
