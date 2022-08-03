@@ -26,4 +26,6 @@ run
 /README.txt
 /CREDITS.txt
 /LICENSE.txt
+
+# not to sync
 /gradle.properties
